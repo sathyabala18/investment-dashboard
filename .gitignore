@@ -1,1 +1,12 @@
-"credentials.json"  "__pycache__/"  ".venv/" 
+## Secrets / credentials
+credentials.json
+credentials*.json
+*.pem
+
+## Python caches
+__pycache__/
+*.pyc
+
+## Virtual environments
+.venv/
+venv/
