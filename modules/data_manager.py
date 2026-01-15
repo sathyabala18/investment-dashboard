@@ -21,9 +21,12 @@ class DataManager:
         or Cloud Run Service Account identity for production.
         """
         try:
-            # Try to use credentials.json file first (for local development)
-            credentials_path = "credentials.json"
-            if os.path.exists(credentials_path):
+            # Try to use a local credentials file first (for local development)
+            # Preferred name: credentials.json
+            possible_paths = ["credentials.json", "credentials.json.json"]
+            credentials_path = next((p for p in possible_paths if os.path.exists(p)), None)
+
+            if credentials_path:
                 creds = service_account.Credentials.from_service_account_file(
                     credentials_path,
                     scopes=_self.scope
@@ -54,10 +57,17 @@ class DataManager:
             client = self.get_client()
             if not client:
                 return []
+
             sh = client.open_by_key(self.spreadsheet_id)
-            # Filter out hidden worksheets
+
+            # Filter out hidden worksheets (compatible with older gspread versions)
             all_worksheets = sh.worksheets()
-            visible_worksheets = [ws for ws in all_worksheets if not ws.hidden]
+            visible_worksheets = [
+                ws
+                for ws in all_worksheets
+                if not getattr(ws, "_properties", {}).get("hidden", False)
+            ]
+
             return [ws.title for ws in visible_worksheets]
         except Exception as e:
             st.error(f"Error listing tabs: {e}")
