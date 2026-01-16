@@ -73,13 +73,14 @@ class DataManager:
             st.error(f"Error listing tabs: {e}")
             return []
 
-    def fetch_sheet_data(self, worksheet_name):
+    @st.cache_data(ttl=600, show_spinner=False)
+    def fetch_sheet_data(_self, worksheet_name):
         """Fetches data from a specific tab into a Pandas DataFrame."""
         try:
-            client = self.get_client()
+            client = _self.get_client()
             if not client:
                 return pd.DataFrame()
-            sh = client.open_by_key(self.spreadsheet_id)
+            sh = client.open_by_key(_self.spreadsheet_id)
             worksheet = sh.worksheet(worksheet_name)
             data = worksheet.get_all_records()
             return pd.DataFrame(data)

@@ -96,37 +96,26 @@ def main():
                 st.session_state.selected_tab = None
                 st.rerun()
 
-    # Title
-    st.markdown(f"<h1>{selected_tab}</h1>", unsafe_allow_html=True)
+    # Title (Formatted: "my_sheet_name" -> "My Sheet Name")
+    display_title = selected_tab.replace("_", " ").title()
+    st.markdown(f"<h1>{display_title}</h1>", unsafe_allow_html=True)
 
     # Fetch and display data
     with st.spinner("Accessing Financial Data..."):
         df = dm.fetch_sheet_data(selected_tab)
 
+    # ROUTING LOGIC
+    from modules.sheet_views import SheetViews
+
     if not df.empty:
-        # Summary Metrics
-        st.markdown("### 📊 At a Glance")
-        m_col1, m_col2, m_col3 = st.columns(3)
-        with m_col1:
-            st.metric("Total Records", len(df))
-        with m_col2:
-            st.metric("Data Fields", len(df.columns))
-        with m_col3:
-            st.metric("Status", "Active")
-
-        st.markdown("---")
-
-        # Data Table
-        st.markdown("### 📝 Detailed Records")
-        st.dataframe(
-            df,
-            use_container_width=True,
-            height=500,
-        )
-
-        st.markdown("---")
-        st.markdown("### 📈 Analytics")
-        st.info("Visualizations will appear here in the next update.")
+        # Check specific sheet names to determine View
+        # Handle variations: "important info", "important_info"
+        normalized_name = selected_tab.strip().lower().replace("_", " ")
+        
+        if normalized_name == "important info":
+            SheetViews.render_important_info(df)
+        else:
+            SheetViews.render_default(df)
         
     else:
         st.warning("⚠️ The selected tab is empty or could not be loaded.")
