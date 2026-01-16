@@ -119,6 +119,15 @@ def inject_custom_css(is_home: bool, background_image: str | None = None):
                 position: relative;
             }}
             
+            /* Hide Streamlit Chart Actions (Show Data, Maximize) */
+            [data-testid="stElementToolbar"] {{
+                display: none !important;
+            }}
+            button[title="View fullscreen"] {{
+                display: none !important;
+            }}
+
+            /* Scrollbar Styling */
             /* --- WIDGET STYLING --- */
             
             /* Selectbox itself */

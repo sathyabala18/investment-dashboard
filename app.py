@@ -100,20 +100,26 @@ def main():
     display_title = selected_tab.replace("_", " ").title()
     st.markdown(f"<h1>{display_title}</h1>", unsafe_allow_html=True)
 
+    # Determine if we need custom headers for specific sheets
+    header_row = 1
+    normalized_name = selected_tab.strip().lower().replace("_", " ")
+    
+    if normalized_name == "mutual funds":
+        header_row = 4
+
     # Fetch and display data
     with st.spinner("Accessing Financial Data..."):
-        df = dm.fetch_sheet_data(selected_tab)
+        df = dm.fetch_sheet_data(selected_tab, header_row=header_row)
 
     # ROUTING LOGIC
     from modules.sheet_views import SheetViews
 
     if not df.empty:
         # Check specific sheet names to determine View
-        # Handle variations: "important info", "important_info"
-        normalized_name = selected_tab.strip().lower().replace("_", " ")
-        
         if normalized_name == "important info":
             SheetViews.render_important_info(df)
+        elif normalized_name == "mutual funds":
+             SheetViews.render_mutual_funds(df)
         else:
             SheetViews.render_default(df)
         

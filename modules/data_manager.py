@@ -73,17 +73,50 @@ class DataManager:
             st.error(f"Error listing tabs: {e}")
             return []
 
-    @st.cache_data(ttl=600, show_spinner=False)
-    def fetch_sheet_data(_self, worksheet_name):
-        """Fetches data from a specific tab into a Pandas DataFrame."""
+    def fetch_sheet_data(self, worksheet_name, header_row=1):
+        """
+        Fetches data from a specific tab into a Pandas DataFrame.
+        Uses session-based caching for performance during session.
+        :param header_row: 1-based index of the header row (default 1).
+        """
+        # Initialize session cache if not exists
+        if "sheet_cache" not in st.session_state:
+            st.session_state["sheet_cache"] = {}
+        
+        # Create cache key
+        cache_key = f"{worksheet_name}_row{header_row}"
+        
+        # Check if data is already cached in session
+        if cache_key in st.session_state["sheet_cache"]:
+            return st.session_state["sheet_cache"][cache_key]
+        
+        # Fetch fresh data
         try:
-            client = _self.get_client()
+            client = self.get_client()
             if not client:
                 return pd.DataFrame()
-            sh = client.open_by_key(_self.spreadsheet_id)
+            sh = client.open_by_key(self.spreadsheet_id)
             worksheet = sh.worksheet(worksheet_name)
-            data = worksheet.get_all_records()
-            return pd.DataFrame(data)
+            
+            if header_row == 1:
+                # Fast path for standard sheets
+                data = worksheet.get_all_records()
+                df = pd.DataFrame(data)
+            else:
+                # Custom path for offset headers
+                all_values = worksheet.get_all_values()
+                # header_row is 1-based, so index is header_row - 1
+                if len(all_values) < header_row:
+                    return pd.DataFrame()
+                
+                headers = all_values[header_row - 1]
+                rows = all_values[header_row:]
+                df = pd.DataFrame(rows, columns=headers)
+            
+            # Store in session cache
+            st.session_state["sheet_cache"][cache_key] = df
+            return df
+
         except Exception as e:
             st.error(f"Error fetching '{worksheet_name}': {e}")
             return pd.DataFrame()
